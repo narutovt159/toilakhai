@@ -11,7 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 
 # Telegram Bot Token
-TG_BOT_ACCESS_TOKEN = '7370288287:AAEGJlx_o36SifDl5Q1XujSLAocUfysUb4U'  # 🔴 Thay bằng token thật
+TG_BOT_ACCESS_TOKEN = '7370288287:AAEGJlx_o36SifDl5Q1XujSLAocUfysUb4U'  # 🔴 Thay bằng token
 
 # Configure logging
 logging.basicConfig(
