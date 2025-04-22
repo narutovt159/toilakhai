@@ -94,7 +94,7 @@ def get_latest_tintuc():
                 article_info = f"📰 *{title}*\n\n{description}\n[Đọc thêm]({link})\n\n@onusfuture"
                 latest_articles.append((title, article_info, image_url, link))
             except Exception as e:
-                logging.error(f"Lỗi khi xử lý bài viết: {e}")
+                logging.error(f"Lỗi khi bài viết: {e}")
                 continue
 
         driver.quit()  # Đóng trình duyệt
