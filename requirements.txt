@@ -1,0 +1,4 @@
+Flask==2.0.2
+requests==2.26.0
+python-telegram-bot==13.9
+selenium==4.0.0
