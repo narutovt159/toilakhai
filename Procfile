@@ -1,1 +1,1 @@
-web: ./render-build.sh
+worker: python tintuc_replit.py
