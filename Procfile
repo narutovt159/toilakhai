@@ -1,1 +1,1 @@
-web: tintuc_replit.py
+worker: tintuc_replit.py
