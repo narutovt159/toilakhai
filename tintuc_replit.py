@@ -26,10 +26,11 @@ last_message_id = {}
 # Configure Selenium WebDriver
 def init_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--no-sandbox")  # Vô hiệu hóa cache
-    chrome_options.add_argument("--window-size=1420,1080")  # Tắt extensions không cần thiết
     chrome_options.add_argument("--headless")  # Tắt giao diện đồ họa
+    chrome_options.add_argument("--no-sandbox")  # Vô hiệu hóa cache
     chrome_options.add_argument("--disable-gpu")  # Tắt GPU để giảm tải
+    chrome_options.add_argument("--disable-extensions")  # Tắt extensions không cần thiết
+    chrome_options.add_argument("--dns-prefetch-disable")  # Tắt extensions không cần thiết
 
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     return driver
