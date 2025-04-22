@@ -35,7 +35,7 @@ def init_driver():
 
     # Cập nhật đường dẫn binary location của Chrome (nếu cần thiết trên môi trường render)
     # Cách xác định đường dẫn chrome binary trong render
-    chrome_options.binary_location = "/usr/bin/google-chrome-stable"
+    chrome_options.binary_location = "/usr/bin/google-chrome"
 
     # Tạo service cho ChromeDriver
     service = Service(ChromeDriverManager().install())  # Tự động cài đặt ChromeDriver
