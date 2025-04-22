@@ -1,1 +1,1 @@
-web: tintuc_replit.py.py
+web: tintuc_replit.py
