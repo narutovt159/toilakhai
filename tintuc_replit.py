@@ -24,19 +24,23 @@ last_message_id = {}
 
 
 # Configure Selenium WebDriver
+
 def init_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--disable-software-rasterizer")
+    chrome_options.add_argument("--headless")  # Chạy không giao diện
+    chrome_options.add_argument("--no-sandbox")  # Cần thiết khi chạy trên môi trường không có giao diện
+    chrome_options.add_argument("--disable-dev-shm-usage")  # Giảm tải bộ nhớ
+    chrome_options.add_argument("--disable-gpu")  # Tắt GPU (khi chạy headless không cần thiết)
+    chrome_options.add_argument("--disable-extensions")  # Tắt extensions không cần thiết
+    chrome_options.add_argument("--disable-software-rasterizer")  # Tắt sử dụng phần mềm render
 
-    service = Service()
+    # Chỉ định đường dẫn đến binary của Chrome hoặc Chromium
+    chrome_options.binary_location = "/usr/bin/google-chrome-stable"
+
+    # Tải ChromeDriver tự động và khởi tạo WebDriver
+    service = Service(ChromeDriverManager().install())  # Cài đặt ChromeDriver tự động
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
-
 
 # Hàm lấy giá coin từ crypto.com
 def get_coin_data():
