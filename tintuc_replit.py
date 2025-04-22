@@ -29,10 +29,12 @@ def init_driver():
     chrome_options.add_argument("--headless")  # Tắt giao diện đồ họa
     chrome_options.add_argument("--no-sandbox")  # Vô hiệu hóa cache
     chrome_options.add_argument("--disable-gpu")  # Tắt GPU để giảm tải
+    chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-extensions")  # Tắt extensions không cần thiết
     chrome_options.add_argument("--dns-prefetch-disable")  # Tắt extensions không cần thiết
-
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    chrome_options.add_argument("--disable-software-rasterizer")
+    service = Service()
+    driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
 
 # Hàm lấy giá coin từ crypto.com
