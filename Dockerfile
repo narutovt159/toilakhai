@@ -46,9 +46,6 @@ RUN pip install selenium webdriver-manager
 # Copy mã nguồn Python của bạn vào container
 COPY . /app
 
-# Cài đặt Chromium (Nếu bạn muốn sử dụng Chromium thay vì Google Chrome)
-# RUN apt-get install -y chromium
-
 # Chạy script Python của bạn
 
 CMD ["python3", "tintuc_replit.py"]
