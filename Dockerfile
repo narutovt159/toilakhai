@@ -48,5 +48,4 @@ RUN chmod -R 755 /app
 COPY . /app
 
 # Chạy script Python của bạn
-CMD python3 tintuc_replit.py & python3 tintuc_test.py & python3 tinmoi.py & python3 bitcoin_news.py & & python3 positions & wait
-
+CMD python3 tintuc_replit.py & python3 tintuc_test.py & python3 tinmoi.py & python3 bitcoin_news.py & python3 positions.py
