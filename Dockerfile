@@ -31,9 +31,6 @@ RUN DISTRO=$(lsb_release -c | awk '{print $2}') && echo "deb [arch=amd64] https:
 # Cài đặt Google Chrome
 RUN apt-get update && apt-get install -y google-chrome-stable
 
-# Kiểm tra xem chrome binary có ở đâu
-RUN echo "Google Chrome binary location:" && which google-chrome-stable
-
 # Cài đặt ChromeDriver tương thích với phiên bản Chrome
 RUN wget -N https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
 RUN unzip chromedriver_linux64.zip && mv chromedriver /usr/local/bin/chromedriver
@@ -49,5 +46,9 @@ RUN pip install selenium webdriver-manager
 # Copy mã nguồn Python của bạn vào container
 COPY . /app
 
+# Cài đặt Chromium (Nếu bạn muốn sử dụng Chromium thay vì Google Chrome)
+# RUN apt-get install -y chromium
+
+# Chạy script Python của bạn
 
 CMD ["python3", "tintuc_replit.py"]
