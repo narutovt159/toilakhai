@@ -1,30 +1,18 @@
 import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 from webdriver_manager.chrome import ChromeDriverManager
-import time
-import re
 import tempfile
 import os
-import asyncio
-
-# Telegram Bot Token
-TG_BOT_ACCESS_TOKEN = '7231655061:AAEwNdGdNKWDT7LQ4dv52OLYqx7DcNfZmos'  # 🔴 Thay bằng token thật
+import time
+import re
 
 # Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
-
-# Lưu message_id của tin nhắn giá coin cuối cùng
-last_message_id = {}
 
 # Configure Selenium WebDriver
 def init_driver():
@@ -38,6 +26,7 @@ def init_driver():
     chrome_options.add_argument("--disable-gpu")  # Tắt GPU để giảm tải
     chrome_options.add_argument("--disable-extensions")  # Tắt extensions không cần thiết
     chrome_options.add_argument(f"--user-data-dir={temp_dir}")  # Chỉ định thư mục tạm thời làm user-data-dir
+    chrome_options.add_argument("--no-sandbox")  # Thêm --no-sandbox để tránh vấn đề quyền truy cập trong môi trường không GUI
 
     # Khởi tạo WebDriver
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
