@@ -48,4 +48,4 @@ RUN chmod -R 755 /app
 COPY . /app
 
 # Chạy script Python của bạn
-CMD python3 tintuc_replit.py
+CMD python3 tintuc_test.py
