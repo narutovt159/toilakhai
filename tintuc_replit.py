@@ -26,13 +26,14 @@ last_message_id = {}
 # Configure Selenium WebDriver
 def init_driver():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Chạy không có giao diện
-    chrome_options.add_argument("--no-sandbox")  # Tắt sandbox (cần cho môi trường Docker)
-    chrome_options.add_argument("--disable-dev-shm-usage")  # Dùng ổ đĩa tạm thay vì bộ nhớ chia sẻ
+    chrome_options.add_argument("--headless")  # Tắt giao diện đồ họa
+    chrome_options.add_argument("--no-cache")  # Vô hiệu hóa cache
     chrome_options.add_argument("--disable-gpu")  # Tắt GPU để giảm tải
-    chrome_options.add_argument("--remote-debugging-port=9222")  # Bật cổng remote debugging
+    chrome_options.add_argument("--disable-extensions")  # Tắt extensions không cần thiết
     
-    # Tạo Chrome driver
+    # Chỉ định đường dẫn tới binary của Chrome nếu cần thiết
+    chrome_options.binary_location = "/usr/bin/google-chrome"  # Thay đổi đường dẫn nếu khác
+
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     return driver
 
