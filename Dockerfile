@@ -22,9 +22,10 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends
 
 # Cài đặt Google Chrome
-RUN wget -q -O - https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb > chrome.deb && \
+RUN wget -q -O - https://dl.google.com/linux/direct/google-chrome-stable_113.0.5672.92-1_amd64.deb > chrome.deb && \
     dpkg -i chrome.deb && \
     apt-get install -f -y
+
 
 # Cài đặt các thư viện Python từ requirements.txt
 COPY requirements.txt .
