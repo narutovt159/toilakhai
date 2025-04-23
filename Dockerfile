@@ -1,7 +1,7 @@
-# Chọn image python chính thức làm base image
+# Chọn image Python chính thức làm base image
 FROM python:3.9-slim
 
-# Cài đặt các phụ thuộc cần thiết
+# Cài đặt các dependencies cần thiết cho Chrome và Selenium
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
@@ -22,23 +22,27 @@ RUN apt-get update && apt-get install -y \
     libepoxy0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt Chrome và ChromeDriver
+# Cài đặt Google Chrome
 RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 RUN dpkg -i google-chrome-stable_current_amd64.deb || apt-get install -f -y
-RUN wget -N https://chromedriver.storage.googleapis.com/112.0.5615.49/chromedriver_linux64.zip
+
+# Kiểm tra và xuất ra đường dẫn của chrome binary
+RUN echo "Chrome binary location:" && which google-chrome
+
+# Cài đặt ChromeDriver tương thích với Chrome version
+RUN wget -N https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
 RUN unzip chromedriver_linux64.zip && mv chromedriver /usr/local/bin/chromedriver
 
-# Cài đặt các thư viện Python cần thiết
+# Cài đặt các thư viện Python cần thiết từ file requirements.txt
 COPY requirements.txt /app/requirements.txt
 WORKDIR /app
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Cài đặt Selenium
-RUN pip install selenium
+# Cài đặt Selenium và WebDriver Manager
+RUN pip install selenium webdriver-manager
 
-# Cài đặt ChromeDriverManager (Nếu bạn không muốn dùng ChromeDriver tĩnh)
-RUN pip install webdriver-manager
-
-# Chạy một script Python (chạy file script Python của bạn ở đây)
+# Copy mã nguồn Python của bạn vào container
 COPY . /app
+
+# Chạy script Python của bạn
 CMD ["python3", "tintuc_replit.py"]
