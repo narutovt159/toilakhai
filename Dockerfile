@@ -51,4 +51,4 @@ COPY . /app
 # ... (Giữ nguyên phần trên của Dockerfile từ tintuc_replit.py)
 
 # Chạy nhiều file Python song song
-CMD python3 tintuc_replit.py & python3 tintuc_test.py & python3 tinmoi.py & python3 bitcoin_news.py & python3 positions.py & wait
+CMD python3 tinmoi.py
