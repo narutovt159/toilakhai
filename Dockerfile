@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-# Cài đặt các thư viện cần thiết cho Chromium và ChromeDriver
+# Cài đặt các gói cơ bản và thư viện cần thiết cho Chromium và ChromeDriver
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -21,13 +21,14 @@ RUN apt-get update && apt-get install -y \
     chromium-browser \
     --no-install-recommends
 
-# Cài đặt Playwright hoặc Selenium và các thư viện Python
-RUN pip install playwright
-RUN playwright install
+# Cài đặt Selenium và WebDriver Manager
+RUN pip install selenium webdriver-manager
 
+# Sao chép và cài đặt các thư viện Python từ requirements.txt
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
+# Cài đặt các ứng dụng khác nếu có
 COPY . .
 
 CMD ["python3", "tintuc_replit.py"]
