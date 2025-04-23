@@ -20,14 +20,19 @@ RUN apt-get update && apt-get install -y \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
     libepoxy0 \
+    gnupg2 \
+    lsb-release \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt Google Chrome từ kho chính thức
-RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-RUN dpkg -i google-chrome-stable_current_amd64.deb || apt-get install -f -y
+# Thêm kho Google vào hệ thống để cài đặt Google Chrome
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - 
+RUN DISTRO=$(lsb_release -c | awk '{print $2}') && echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
 
-# Kiểm tra lại và xác nhận lại đường dẫn chrome binary
-RUN echo "Google Chrome binary location:" && find / -name "google-chrome*"
+# Cài đặt Google Chrome
+RUN apt-get update && apt-get install -y google-chrome-stable
+
+# Kiểm tra xem chrome binary có ở đâu
+RUN echo "Google Chrome binary location:" && which google-chrome-stable
 
 # Cài đặt ChromeDriver tương thích với phiên bản Chrome
 RUN wget -N https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
@@ -44,6 +49,5 @@ RUN pip install selenium webdriver-manager
 # Copy mã nguồn Python của bạn vào container
 COPY . /app
 
-# Chạy script Python của bạn
 
 CMD ["python3", "tintuc_replit.py"]
