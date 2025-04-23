@@ -27,7 +27,7 @@ RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.d
 RUN dpkg -i google-chrome-stable_current_amd64.deb || apt-get install -f -y
 
 # Kiểm tra xem chrome binary có ở đâu
-RUN echo "Google Chrome binary location:" && which google-chrome-stable
+RUN echo "Google Chrome binary location:" && find / -name "google-chrome*"
 
 # Cài đặt ChromeDriver tương thích với phiên bản Chrome
 RUN wget -N https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
@@ -45,6 +45,5 @@ RUN pip install selenium webdriver-manager
 COPY . /app
 
 # Chạy script Python của bạn
-
 
 CMD ["python3", "tintuc_replit.py"]
