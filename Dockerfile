@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
     chromium-driver \
     --no-install-recommends
 
-# Tải và cài đặt Google Chrome
+# Cài đặt Google Chrome
 RUN wget -q -O - https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb > chrome.deb && \
     dpkg -i chrome.deb && \
     apt-get install -f -y
