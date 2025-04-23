@@ -30,12 +30,7 @@ def init_driver():
     chrome_options.add_argument("--no-cache")  # Vô hiệu hóa cache
     chrome_options.add_argument("--disable-gpu")  # Tắt GPU để giảm tải
     chrome_options.add_argument("--disable-extensions")  # Tắt extensions không cần thiết
-    chrome_options.add_argument("--remote-debugging-port=9222")  # Thêm tùy chọn remote debugging
-    chrome_options.add_argument("--no-sandbox")  # Tắt sandboxing (có thể cần cho môi trường server hoặc Docker)
-
-    # Cài đặt driver với ChromeDriverManager và các tùy chọn trên
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-
     return driver
 
 # Hàm lấy giá coin từ crypto.com
