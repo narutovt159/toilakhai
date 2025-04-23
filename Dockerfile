@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-# Cài đặt các gói cơ bản và các thư viện cần thiết cho Google Chrome
+# Cài đặt các gói cơ bản và thư viện cần thiết cho Chrome
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -31,6 +31,4 @@ COPY requirements.txt .
 RUN pip3 install -r requirements.txt
 
 COPY . .
-
-
 CMD ["python3", "tintuc_replit.py"]
