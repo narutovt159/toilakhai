@@ -1,18 +1,30 @@
 import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 from webdriver_manager.chrome import ChromeDriverManager
-import tempfile
-import os
 import time
 import re
+import tempfile
+import os
+import asyncio
+
+# Telegram Bot Token
+TG_BOT_ACCESS_TOKEN = '7231655061:AAEwNdGdNKWDT7LQ4dv52OLYqx7DcNfZmos'  # 🔴 Thay bằng token thật
 
 # Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+
+# Lưu message_id của tin nhắn giá coin cuối cùng
+last_message_id = {}
 
 # Configure Selenium WebDriver
 def init_driver():
