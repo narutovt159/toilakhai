@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y \
     libepoxy0 \
     gnupg2 \
     lsb-release \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Thêm kho Google vào hệ thống để cài đặt Google Chrome
@@ -31,19 +32,20 @@ RUN DISTRO=$(lsb_release -c | awk '{print $2}') && echo "deb [arch=amd64] https:
 # Cài đặt Google Chrome
 RUN apt-get update && apt-get install -y google-chrome-stable
 
-# Cài đặt ChromeDriver tương thích với phiên bản Chrome
-RUN wget -N https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
-RUN unzip chromedriver_linux64.zip && mv chromedriver /usr/local/bin/chromedriver
-
 # Cài đặt các thư viện Python cần thiết từ file requirements.txt
 COPY requirements.txt /app/requirements.txt
 WORKDIR /app
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Cài đặt Selenium và WebDriver Manager
+RUN pip install selenium webdriver-manager
+
+# Đặt quyền cho thư mục làm việc
+RUN chown -R root:root /app
+RUN chmod -R 755 /app
 
 # Copy mã nguồn Python của bạn vào container
 COPY . /app
 
 # Chạy script Python của bạn
-
 CMD ["python3", "tintuc_replit.py"]
