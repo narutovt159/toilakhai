@@ -40,8 +40,6 @@ COPY requirements.txt /app/requirements.txt
 WORKDIR /app
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Cài đặt Selenium và WebDriver Manager
-RUN pip install selenium webdriver-manager
 
 # Copy mã nguồn Python của bạn vào container
 COPY . /app
