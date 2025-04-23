@@ -30,12 +30,10 @@ def init_driver():
     chrome_options.add_argument("--no-cache")  # Vô hiệu hóa cache
     chrome_options.add_argument("--disable-gpu")  # Tắt GPU để giảm tải
     chrome_options.add_argument("--disable-extensions")  # Tắt extensions không cần thiết
-    
-    # Chỉ định đường dẫn tới binary của Chrome nếu cần thiết
-    chrome_options.binary_location = "/usr/bin/google-chrome"  # Thay đổi đường dẫn nếu khác
-
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     return driver
+
+
 
 # Hàm lấy giá coin từ crypto.com
 def get_coin_data():
