@@ -22,16 +22,16 @@ RUN apt-get update && apt-get install -y \
     libepoxy0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt Google Chrome từ kho chính thức của Google
+# Cài đặt Google Chrome từ gói .deb chính thức
 RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 RUN dpkg -i google-chrome-stable_current_amd64.deb || apt-get install -f -y
 
-# Cài đặt ChromeDriver
+# Kiểm tra xem chrome binary có ở đâu
+RUN echo "Google Chrome binary location:" && which google-chrome-stable
+
+# Cài đặt ChromeDriver tương thích với phiên bản Chrome
 RUN wget -N https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
 RUN unzip chromedriver_linux64.zip && mv chromedriver /usr/local/bin/chromedriver
-
-# Kiểm tra đường dẫn binary của Google Chrome
-RUN echo "Google Chrome binary location:" && which google-chrome
 
 # Cài đặt các thư viện Python cần thiết từ file requirements.txt
 COPY requirements.txt /app/requirements.txt
