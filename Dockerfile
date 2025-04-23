@@ -22,11 +22,11 @@ RUN apt-get update && apt-get install -y \
     libepoxy0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt Google Chrome từ gói .deb chính thức
+# Cài đặt Google Chrome từ kho chính thức
 RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 RUN dpkg -i google-chrome-stable_current_amd64.deb || apt-get install -f -y
 
-# Kiểm tra xem chrome binary có ở đâu
+# Kiểm tra lại và xác nhận lại đường dẫn chrome binary
 RUN echo "Google Chrome binary location:" && find / -name "google-chrome*"
 
 # Cài đặt ChromeDriver tương thích với phiên bản Chrome
