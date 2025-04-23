@@ -10,9 +10,6 @@ from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 import re
-import tempfile
-import os
-import asyncio
 
 # Telegram Bot Token
 TG_BOT_ACCESS_TOKEN = '7231655061:AAEwNdGdNKWDT7LQ4dv52OLYqx7DcNfZmos'  # 🔴 Thay bằng token thật
@@ -28,29 +25,20 @@ last_message_id = {}
 
 # Configure Selenium WebDriver
 def init_driver():
-    # Tạo thư mục tạm thời cho user-data-dir để tránh xung đột
-    temp_dir = tempfile.mkdtemp()
-
-    # Cấu hình Chrome options
     chrome_options = Options()
     chrome_options.add_argument("--headless")  # Tắt giao diện đồ họa
     chrome_options.add_argument("--no-cache")  # Vô hiệu hóa cache
     chrome_options.add_argument("--disable-gpu")  # Tắt GPU để giảm tải
     chrome_options.add_argument("--disable-extensions")  # Tắt extensions không cần thiết
-    chrome_options.add_argument(f"--user-data-dir={temp_dir}")  # Chỉ định thư mục tạm thời làm user-data-dir
-    chrome_options.add_argument("--no-sandbox")  # Thêm --no-sandbox để tránh vấn đề quyền truy cập trong môi trường không GUI
-
-    # Khởi tạo WebDriver
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    return driver
 
-    # Trả về driver và thư mục tạm thời
-    return driver, temp_dir
 
 
 # Hàm lấy giá coin từ crypto.com
 def get_coin_data():
     try:
-        driver, temp_dir = init_driver()
+        driver = init_driver()
         driver.get("https://crypto.com/price")
         
         # Làm mới trang để đảm bảo dữ liệu mới
@@ -65,7 +53,6 @@ def get_coin_data():
         except Exception as e:
             logging.error(f"Timeout: Không tìm thấy phần tử tên coin: {e}")
             driver.quit()
-            os.rmdir(temp_dir)  # Xóa thư mục tạm thời sau khi sử dụng
             return []
 
         # Cuộn trang để tải dữ liệu
@@ -110,12 +97,10 @@ def get_coin_data():
                 break
         
         driver.quit()
-        os.rmdir(temp_dir)  # Xóa thư mục tạm thời sau khi sử dụng
         return coins
     except Exception as e:
         logging.error(f"Lỗi khi lấy giá coin: {e}")
         return []
-
 
 # Hàm gửi giá coin qua Telegram và xóa tin nhắn cũ
 async def send_coin_prices(context: ContextTypes.DEFAULT_TYPE):
@@ -142,23 +127,24 @@ async def send_coin_prices(context: ContextTypes.DEFAULT_TYPE):
             except Exception as e:
                 logging.warning(f"Không thể xóa tin nhắn cũ: {e}")
 
-        # Gửi tin nhắn mới với ảnh từ URL
+        # Gửi tin nhắn mới với ảnh từ file cục bộ
+        # Trong phần gửi tin nhắn mới với ảnh từ URL
         try:
             sent_message = await context.bot.send_photo(
-                chat_id=chat_id,
-                photo="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhRcTWgFGruUEAFjrf9QOwd4v9Ks0YzkZ-o2ALerFSSSUJDKhyIF6Uf7qYPNoCTLHLT99CSKgSEvdoA9NtEBw7NhEJQi5dz3UaLEnawoA_Na_dmeNZnjo4WOt48qVIFRdbZeRSzsCnZ4nNbQlDDTY__Y0o1NY3GlniOWkfQzl3kaX0R_d1e5nBVlFpBmC4/s1279/z6528522093337_835d781400610f3264538bd3e4acd00d.jpg",
-                caption=caption,
-                parse_mode="Markdown",
-                reply_markup=reply_markup
+            chat_id=chat_id,
+            photo="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhRcTWgFGruUEAFjrf9QOwd4v9Ks0YzkZ-o2ALerFSSSUJDKhyIF6Uf7qYPNoCTLHLT99CSKgSEvdoA9NtEBw7NhEJQi5dz3UaLEnawoA_Na_dmeNZnjo4WOt48qVIFRdbZeRSzsCnZ4nNbQlDDTY__Y0o1NY3GlniOWkfQzl3kaX0R_d1e5nBVlFpBmC4/s1279/z6528522093337_835d781400610f3264538bd3e4acd00d.jpg",
+            caption=caption,
+            parse_mode="Markdown",
+            reply_markup=reply_markup
             )
             last_message_id[chat_id] = sent_message.message_id
         except Exception as e:
             logging.error(f"Lỗi khi gửi ảnh: {e}")
             sent_message = await context.bot.send_message(
-                chat_id=chat_id,
-                text=caption,
-                parse_mode="Markdown",
-                reply_markup=reply_markup
+            chat_id=chat_id,
+            text=caption,
+            parse_mode="Markdown",
+            reply_markup=reply_markup
             )
             last_message_id[chat_id] = sent_message.message_id
 
@@ -172,7 +158,6 @@ async def giacoin(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Chạy định kỳ mỗi 30 giây
     context.job_queue.run_repeating(send_coin_prices, interval=5, first=5, chat_id=chat_id)
-
 
 # Lệnh /stop để dừng gửi giá coin
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -190,8 +175,8 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Không có tác vụ nào đang chạy!", parse_mode="Markdown")
 
-
 if __name__ == '__main__':
+    import asyncio  # Thêm import asyncio
     application = ApplicationBuilder().token(TG_BOT_ACCESS_TOKEN).build()
 
     giacoin_handler = CommandHandler('giacoin', giacoin)
