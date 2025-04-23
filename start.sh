@@ -15,3 +15,5 @@ if [[ ! -d $STORAGE_DIR/chrome ]]; then
 else
   echo "...Using Chrome from cache"
 fi
+
+python tintuc_replit.py
