@@ -1,1 +1,1 @@
-worker: python tintuc_replit.py
+worker: ./start.sh
