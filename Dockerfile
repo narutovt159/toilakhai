@@ -22,15 +22,16 @@ RUN apt-get update && apt-get install -y \
     libepoxy0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Cài đặt Chromium thay vì Google Chrome (để tránh lỗi với chrome binary)
-RUN apt-get install -y chromium
+# Cài đặt Google Chrome từ kho chính thức của Google
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+RUN dpkg -i google-chrome-stable_current_amd64.deb || apt-get install -f -y
 
-# Kiểm tra và xuất ra đường dẫn của chromium binary
-RUN echo "Chromium binary location:" && which chromium
-
-# Cài đặt ChromeDriver tương thích với Chromium version
+# Cài đặt ChromeDriver
 RUN wget -N https://chromedriver.storage.googleapis.com/114.0.5735.90/chromedriver_linux64.zip
 RUN unzip chromedriver_linux64.zip && mv chromedriver /usr/local/bin/chromedriver
+
+# Kiểm tra đường dẫn binary của Google Chrome
+RUN echo "Google Chrome binary location:" && which google-chrome
 
 # Cài đặt các thư viện Python cần thiết từ file requirements.txt
 COPY requirements.txt /app/requirements.txt
@@ -44,5 +45,6 @@ RUN pip install selenium webdriver-manager
 COPY . /app
 
 # Chạy script Python của bạn
+
 
 CMD ["python3", "tintuc_replit.py"]
