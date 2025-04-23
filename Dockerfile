@@ -1,9 +1,10 @@
 FROM ubuntu:22.04
-
-# Cài đặt các gói cần thiết
+# Cài đặt các gói cơ bản và thư viện cần thiết cho Chrome
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
+    wget \
+    curl \
     libglib2.0-0 \
     libnss3 \
     libgconf-2-4 \
