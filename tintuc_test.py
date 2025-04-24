@@ -13,7 +13,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 from webdriver_manager.chrome import ChromeDriverManager
-from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 
 # Telegram Bot Token
 TG_BOT_ACCESS_TOKEN = '7370288287:AAEGJlx_o36SifDl5Q1XujSLAocUfysUb4U'  # 🔴 Replace with your real token
@@ -71,12 +70,8 @@ def init_driver():
     chrome_options.add_argument("user-agent=Mozilla/5.0")
     user_data_dir = tempfile.mkdtemp()
     chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
-    try:
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        return driver, user_data_dir
-    except Exception as e:
-        logger.error(f"Failed to initialize driver: {e}")
-        raise
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    return driver, user_data_dir
 
 # Clean up driver and temporary directory
 def cleanup_driver(driver, user_data_dir):
@@ -87,7 +82,6 @@ def cleanup_driver(driver, user_data_dir):
     except Exception as e:
         logger.warning(f"Failed to clean up: {e}")
 
-@retry(stop=stop_after_attempt(3), wait=wait_fixed(5), retry=retry_if_exception_type(Exception))
 def get_latest_tintuc():
     """Fetch the 3 latest articles from Tapchibitcoin.io"""
     driver = None
@@ -136,7 +130,6 @@ def get_latest_tintuc():
         if driver:
             cleanup_driver(driver, user_data_dir)
 
-@retry(stop=stop_after_attempt(3), wait=wait_fixed(5), retry=retry_if_exception_type(Exception))
 def get_article_details(url):
     """Fetch article details (description and image)"""
     driver = None
@@ -168,7 +161,8 @@ def get_article_details(url):
             image_url = image_element.get_attribute("src")
             if not image_url:
                 logger.warning(f"⚠️ No image found: {url}")
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to fetch image: {e}")
             image_url = None
 
         return description, image_url
@@ -211,7 +205,7 @@ async def send_latest_tintuc(context: ContextTypes.DEFAULT_TYPE):
 async def tintuc(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     load_sent_articles()
-    context.job_queue.run_repeating(send_latest_tintuc, interval=60, first=1, chat_id=chat_id)
+    context.job_queue.run_repeating(send_latest_tintuc, interval=50, first=1, chat_id=chat_id)
     await update.message.reply_text("Started fetching news from Tapchibitcoin.io!")
 
 if __name__ == '__main__':
