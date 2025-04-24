@@ -16,7 +16,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 
 # Telegram Bot Token
-TG_BOT_ACCESS_TOKEN = '7370288287:AAEGJlx_o36SifDl5Q1XujSLAocUfysUb4U'  # 🔴 Thay bằng token thật
+TG_BOT_ACCESS_TOKEN = '7370288287:AAEGJlx_o36SifDl5Q1XujSLAocUfysUb4U'  # 🔴 Replace with your real token
 
 # Configure logging
 logging.basicConfig(
@@ -25,34 +25,40 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# File để lưu danh sách bài viết đã gửi
+# File to store sent articles
 SENT_ARTICLES_FILE = "sent_articles.json"
 
-# Danh sách lưu bài viết đã gửi
+# Set to store sent articles
 sent_articles = set()
 
-# Hàm đọc danh sách bài viết đã gửi từ file
+# Load sent articles from file
 def load_sent_articles():
     global sent_articles
     if os.path.exists(SENT_ARTICLES_FILE):
-        with open(SENT_ARTICLES_FILE, 'r') as f:
-            sent_articles.update(json.load(f))
+        try:
+            with open(SENT_ARTICLES_FILE, 'r') as f:
+                sent_articles.update(json.load(f))
+        except Exception as e:
+            logger.warning(f"Failed to load sent articles: {e}")
 
-# Hàm lưu danh sách bài viết đã gửi vào file
+# Save sent articles to file
 def save_sent_articles():
-    with open(SENT_ARTICLES_FILE, 'w') as f:
-        json.dump(list(sent_articles), f)
+    try:
+        with open(SENT_ARTICLES_FILE, 'w') as f:
+            json.dump(list(sent_articles), f)
+    except Exception as e:
+        logger.warning(f"Failed to save sent articles: {e}")
 
-# Hàm dừng các tiến trình Chrome/Chromedriver
+# Terminate Chrome/Chromedriver processes
 def kill_chrome_processes():
     try:
         subprocess.run(["pkill", "-9", "chrome"], check=False)
         subprocess.run(["pkill", "-9", "chromedriver"], check=False)
         time.sleep(1)
     except Exception as e:
-        logger.warning(f"Không thể dừng tiến trình Chrome: {e}")
+        logger.warning(f"Could not terminate Chrome processes: {e}")
 
-# Configure Selenium WebDriver
+# Initialize Selenium WebDriver
 def init_driver():
     kill_chrome_processes()
     chrome_options = Options()
@@ -69,61 +75,70 @@ def init_driver():
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         return driver, user_data_dir
     except Exception as e:
-        logger.error(f"Lỗi khởi tạo driver: {e}")
+        logger.error(f"Failed to initialize driver: {e}")
         raise
 
-# Hàm dọn dẹp tài nguyên
+# Clean up driver and temporary directory
 def cleanup_driver(driver, user_data_dir):
     try:
         driver.quit()
         import shutil
         shutil.rmtree(user_data_dir, ignore_errors=True)
     except Exception as e:
-        logger.warning(f"Lỗi khi dọn dẹp: {e}")
+        logger.warning(f"Failed to clean up: {e}")
 
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(5), retry=retry_if_exception_type(Exception))
 def get_latest_tintuc():
-    """Lấy danh sách 3 bài viết mới nhất từ Tapchibitcoin.io"""
+    """Fetch the 3 latest articles from Tapchibitcoin.io"""
     driver = None
     user_data_dir = None
     try:
         driver, user_data_dir = init_driver()
         driver.get("https://tapchibitcoin.io")
         wait = WebDriverWait(driver, 15)
+        
+        # Scroll to load dynamic content
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2)
+        
         articles = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "entry-title")))[:3]
-
         latest_articles = []
+
         for article in articles:
             try:
                 title = article.find_element(By.TAG_NAME, "a").get_attribute("title")
                 link = article.find_element(By.TAG_NAME, "a").get_attribute("href")
 
                 if "[QC]" in title or "quảng cáo" in title.lower():
-                    logger.info(f"🔴 Bỏ qua bài viết quảng cáo: {title}")
+                    logger.info(f"🔴 Skipping ad article: {title}")
                     continue
 
                 if link in sent_articles:
+                    logger.info(f"🔄 Skipping already sent article: {title}")
                     continue
 
                 description, image_url = get_article_details(link)
                 if not description:
-                    logger.info(f"⚠️ Bỏ qua bài viết không có mô tả: {title}")
+                    logger.info(f"⚠️ Skipping article with no description: {title}")
                     continue
 
                 article_info = f"📰 *{title}*\n\n{description}\n[Đọc thêm]({link})\n\n@onusfuture"
                 latest_articles.append((title, article_info, image_url, link))
             except Exception as e:
-                logger.error(f"Lỗi khi xử lý bài viết: {e}")
+                logger.error(f"Error processing article: {e}")
                 continue
 
         return latest_articles
+    except Exception as e:
+        logger.error(f"Error fetching news: {e}")
+        return []
     finally:
         if driver:
             cleanup_driver(driver, user_data_dir)
 
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(5), retry=retry_if_exception_type(Exception))
 def get_article_details(url):
-    """Lấy chi tiết bài viết (mô tả và ảnh)"""
+    """Fetch article details (description and image)"""
     driver = None
     user_data_dir = None
     try:
@@ -131,28 +146,35 @@ def get_article_details(url):
         driver.get(url)
         wait = WebDriverWait(driver, 20)
 
-        # Cuộn trang để tải nội dung động
+        # Scroll to load dynamic content
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(2)
 
-        # Lấy mô tả
+        # Fetch description
         try:
             content_div = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "td-post-content")))
             paragraphs = content_div.find_elements(By.TAG_NAME, "p")
             description = "\n".join([p.text.strip() for p in paragraphs[:2] if p.text.strip()])
             if not description:
+                logger.warning(f"⚠️ Article content is empty: {url}")
                 return None, None
-        except:
+        except Exception as e:
+            logger.warning(f"Failed to fetch description: {e}")
             return None, None
 
-        # Lấy ảnh
+        # Fetch image
         try:
             image_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "img.attachment-large")))
             image_url = image_element.get_attribute("src")
-        except:
+            if not image_url:
+                logger.warning(f"⚠️ No image found: {url}")
+        except Exception:
             image_url = None
 
         return description, image_url
+    except Exception as e:
+        logger.error(f"Error fetching article details: {e}")
+        return None, None
     finally:
         if driver:
             cleanup_driver(driver, user_data_dir)
@@ -179,22 +201,22 @@ async def send_latest_tintuc(context: ContextTypes.DEFAULT_TYPE):
                     try:
                         await context.bot.send_photo(chat_id=chat_id, photo=image_url, caption=article_text, parse_mode="Markdown", reply_markup=reply_markup)
                     except Exception as e:
-                        logger.warning(f"Lỗi khi gửi ảnh: {e}")
+                        logger.warning(f"Failed to send photo: {e}")
                         await context.bot.send_message(chat_id=chat_id, text=article_text, parse_mode="Markdown", reply_markup=reply_markup)
                 else:
                     await context.bot.send_message(chat_id=chat_id, text=article_text, parse_mode="Markdown", reply_markup=reply_markup)
     except Exception as e:
-        logger.error(f"Lỗi khi gửi tin tức: {e}")
+        logger.error(f"Error sending news: {e}")
 
 async def tintuc(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     load_sent_articles()
     context.job_queue.run_repeating(send_latest_tintuc, interval=60, first=1, chat_id=chat_id)
-    await update.message.reply_text("Đã bắt đầu cập nhật tin tức từ Tapchibitcoin.io!")
+    await update.message.reply_text("Started fetching news from Tapchibitcoin.io!")
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TG_BOT_ACCESS_TOKEN).build()
     tintuc_handler = CommandHandler('tintuc', tintuc)
     application.add_handler(tintuc_handler)
-    logger.info("Bot đang khởi động...")
+    logger.info("Bot is starting...")
     application.run_polling()
