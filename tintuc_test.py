@@ -67,7 +67,7 @@ def init_driver():
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-cache")
     chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("user-agent=Mozilla/5.0")
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
     user_data_dir = tempfile.mkdtemp()
     chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
@@ -94,6 +94,7 @@ def get_latest_tintuc():
         # Scroll to load dynamic content
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         time.sleep(2)
+        wait.until(lambda driver: driver.execute_script("return document.readyState;") == "complete")
         
         articles = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "entry-title")))[:3]
         latest_articles = []
@@ -191,14 +192,14 @@ async def send_latest_tintuc(context: ContextTypes.DEFAULT_TYPE):
                 ]
                 reply_markup = InlineKeyboardMarkup(buttons)
 
-                if image_url:
-                    try:
+                try:
+                    if image_url:
                         await context.bot.send_photo(chat_id=chat_id, photo=image_url, caption=article_text, parse_mode="Markdown", reply_markup=reply_markup)
-                    except Exception as e:
-                        logger.warning(f"Failed to send photo: {e}")
+                    else:
                         await context.bot.send_message(chat_id=chat_id, text=article_text, parse_mode="Markdown", reply_markup=reply_markup)
-                else:
-                    await context.bot.send_message(chat_id=chat_id, text=article_text, parse_mode="Markdown", reply_markup=reply_markup)
+                except Exception as e:
+                    logger.error(f"Error sending article to Telegram: {e}")
+                    await context.bot.send_message(chat_id=chat_id, text=f"📰 *{title}*\n\nLỗi khi gửi bài viết, vui lòng kiểm tra lại.\n[Đọc thêm]({link})", parse_mode="Markdown")
     except Exception as e:
         logger.error(f"Error sending news: {e}")
 
