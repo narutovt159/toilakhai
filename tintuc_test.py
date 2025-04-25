@@ -115,7 +115,7 @@ def get_latest_tintuc():
                 )
 
                 content_div = driver.find_element(By.CLASS_NAME, "td-post-content")
-                description = content_div.find_element(By.TAG_NAME, "p").text[:200] + "..." if content_div else ""
+                description = content_div.find_element(By.TAG_NAME, "p").text if content_div else ""
 
                 # Lấy ảnh
                 image_url = None
