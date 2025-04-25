@@ -67,7 +67,10 @@ def init_driver():
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-cache")
     chrome_options.add_argument("--disable-extensions")
-    
+    # Tạo thư mục tạm duy nhất
+    user_data_dir = tempfile.mkdtemp()
+    chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+    return driver
     try:
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         logging.info("Khởi tạo WebDriver thành công")
