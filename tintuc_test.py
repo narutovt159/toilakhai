@@ -68,11 +68,6 @@ def init_driver():
     chrome_options.add_argument("--no-cache")
     chrome_options.add_argument("--disable-extensions")
     
-    # Tạo thư mục tạm và theo dõi
-    user_data_dir = tempfile.mkdtemp()
-    temp_dirs.append(user_data_dir)
-    chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
-    
     try:
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         logging.info("Khởi tạo WebDriver thành công")
