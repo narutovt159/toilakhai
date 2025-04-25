@@ -1,7 +1,5 @@
 import logging
 import time
-import tempfile
-import subprocess
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -13,7 +11,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 
 # Token Telegram
-TG_BOT_ACCESS_TOKEN1 = '7553105747:AAE9P0yboZrGRlQg9YfyQreNebDCwy4O6cA'  # 🔴 Thay bằng token thật
+TG_BOT_ACCESS_TOKEN1 = '7553105747:AAE9P0yboZrGRlQg9YfyQreNebDCwy4O6cA'  # 🔴 Thay thế bằng Token thật
 
 # Cấu hình logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -21,36 +19,15 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 # Lưu trữ các tin đã gửi để tránh trùng lặp
 sent_articles = set()
 
-# Hàm dừng các tiến trình Chrome/Chromedriver
-def kill_chrome_processes():
-    try:
-        subprocess.run(["pkill", "-9", "chrome"], check=False)
-        subprocess.run(["pkill", "-9", "chromedriver"], check=False)
-        time.sleep(1)  # Đợi để đảm bảo tiến trình đã dừng
-    except Exception as e:
-        logging.warning(f"Không thể dừng tiến trình Chrome: {e}")
-
-# Khởi tạo WebDriver
-def init_driver():
-    kill_chrome_processes()  # Dừng tiến trình trước khi khởi tạo
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Tắt giao diện đồ họa
-    chrome_options.add_argument("--no-sandbox")  # Tắt sandbox để tương thích container
-    chrome_options.add_argument("--disable-dev-shm-usage")  # Giảm sử dụng bộ nhớ chia sẻ
-    chrome_options.add_argument("--disable-gpu")  # Tắt GPU để giảm tải
-    chrome_options.add_argument("--no-cache")  # Vô hiệu hóa cache
-    chrome_options.add_argument("--disable-extensions")  # Tắt extensions không cần thiết
-    chrome_options.add_argument("user-agent=Mozilla/5.0")
-    # Tạo thư mục tạm duy nhất
-    user_data_dir = tempfile.mkdtemp()
-    chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-    return driver
-
 # 📰 Lấy danh sách tin tức mới nhất
 def get_latest_tinmoi():
     try:
-        driver = init_driver()
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("user-agent=Mozilla/5.0")
+
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
         driver.get("https://goonus.io/insights/?tab=newsfeed")
 
         wait = WebDriverWait(driver, 10)
@@ -74,7 +51,11 @@ def get_latest_tinmoi():
 # 📌 Lấy chi tiết bài viết (mô tả & ảnh)
 def get_article_details(url):
     try:
-        driver = init_driver()
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--disable-gpu")
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+
         driver.get(url)
         wait = WebDriverWait(driver, 20)
 
@@ -105,6 +86,7 @@ def get_article_details(url):
         except Exception as e:
             logging.warning(f"⚠️ Không tìm thấy ảnh: {e}")
             image_url = None
+
 
         driver.quit()
         return description, image_url

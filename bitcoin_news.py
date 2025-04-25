@@ -1,7 +1,4 @@
 import logging
-import tempfile
-import subprocess
-import time
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -13,7 +10,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 
 # Telegram Bot Token
-TG_BOT_ACCESS_TOKEN = '7645025545:AAGQNr3XBjsyNDU25f4DgefBDRvjYUHbNLo'  # 🔴 Thay bằng token thật
+TG_BOT_ACCESS_TOKEN = '7645025545:AAGQNr3XBjsyNDU25f4DgefBDRvjYUHbNLo'  # 🔴 Replace with your real token
 
 # Configure logging
 logging.basicConfig(
@@ -21,59 +18,41 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# Danh sách lưu bài viết đã gửi để tránh trùng lặp
+# List to track sent articles to avoid duplicates
 sent_articles = set()
 
-# Hàm dừng các tiến trình Chrome/Chromedriver
-def kill_chrome_processes():
-    try:
-        subprocess.run(["pkill", "-9", "chrome"], check=False)
-        subprocess.run(["pkill", "-9", "chromedriver"], check=False)
-        time.sleep(1)  # Đợi để đảm bảo tiến trình đã dừng
-    except Exception as e:
-        logging.warning(f"Không thể dừng tiến trình Chrome: {e}")
-
-# Khởi tạo WebDriver
+# Initialize WebDriver
 def init_driver():
-    kill_chrome_processes()  # Dừng tiến trình trước khi khởi tạo
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Tắt giao diện đồ họa
-    chrome_options.add_argument("--no-sandbox")  # Tắt sandbox để tương thích container
-    chrome_options.add_argument("--disable-dev-shm-usage")  # Giảm sử dụng bộ nhớ chia sẻ
-    chrome_options.add_argument("--disable-gpu")  # Tắt GPU để giảm tải
-    chrome_options.add_argument("--no-cache")  # Vô hiệu hóa cache
-    chrome_options.add_argument("--disable-extensions")  # Tắt extensions không cần thiết
+    chrome_options.add_argument("--headless")  # Run without GUI (suitable for servers)
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-    # Tạo thư mục tạm duy nhất
-    user_data_dir = tempfile.mkdtemp()
-    chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
     return driver
 
-# Lấy tiêu đề và liên kết từ trang tin tức
+# Fetch titles and links from the news page
 def get_titles_from_page():
-    """Lấy tiêu đề và liên kết từ https://allinstation.com/tin-tuc/"""
+    """Fetch titles and links from https://allinstation.com/tin-tuc/"""
     driver = None
     try:
         driver = init_driver()
-        logging.info("Đang truy cập trang tin tức...")
+        logging.info("Accessing the news page...")
         driver.get("https://allinstation.com/tin-tuc/")
         
-        # Chờ phần tử aria-live xuất hiện
-        logging.info("Đang chờ phần tử aria-live...")
+        # Wait for the element with aria-live="polite" to appear
+        logging.info("Waiting for aria-live element...")
         WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '[aria-live="polite"]'))
         )
 
-        # Cuộn để tải toàn bộ nội dung
+        # Scroll to load all content
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         WebDriverWait(driver, 10).until(
             lambda driver: driver.execute_script("return document.readyState;") == "complete"
         )
 
-        # Lấy bài viết
+        # Fetch articles
         articles = driver.find_elements(By.CSS_SELECTOR, '[aria-live="polite"] div.post-item a')
-        logging.info(f"Số bài viết tìm thấy: {len(articles)}")
+        logging.info(f"Number of articles found: {len(articles)}")
         titles_with_links = []
 
         for article in articles:
@@ -83,62 +62,62 @@ def get_titles_from_page():
                 if title and link:
                     titles_with_links.append((title, link))
             except Exception as e:
-                logging.error(f"Lỗi khi xử lý bài viết: {e}")
+                logging.error(f"Error processing article: {e}")
                 continue
 
         return titles_with_links
     except Exception as e:
-        logging.error(f"Lỗi khi lấy tiêu đề và liên kết: {e}")
+        logging.error(f"Error fetching titles and links: {e}")
         return []
     finally:
         if driver:
             driver.quit()
 
-# Lấy đoạn văn thứ hai từ bài viết
+# Fetch the second paragraph from an article
 def get_second_paragraph_from_article(link):
-    """Lấy đoạn văn thứ hai từ bài viết"""
+    """Fetch the second paragraph from an article"""
     driver = None
     try:
         driver = init_driver()
         driver.get(link)
         
-        # Chờ nội dung bài viết tải
+        # Wait for article content to load
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '.entry-content'))
         )
         
-        # Lấy tất cả đoạn văn
+        # Get all paragraphs
         content = driver.find_element(By.CSS_SELECTOR, '.entry-content')
         paragraphs = content.find_elements(By.TAG_NAME, 'p')
         
-        # Kiểm tra và lấy đoạn văn thứ hai
+        # Check and fetch the second paragraph
         if len(paragraphs) >= 2:
             second_paragraph = paragraphs[1].text.strip()
         else:
-            second_paragraph = "Không tìm thấy đoạn văn thứ hai."
+            second_paragraph = "Second paragraph not found."
         
         return second_paragraph
     except Exception as e:
-        logging.error(f"Lỗi khi lấy nội dung bài viết từ {link}: {e}")
-        return "Không thể lấy nội dung."
+        logging.error(f"Error fetching article content from {link}: {e}")
+        return "Unable to fetch content."
     finally:
         if driver:
             driver.quit()
 
-# Lấy ảnh nổi bật và ảnh nền của bài viết
+# Fetch featured image and background image of an article
 def get_featured_image_and_background(link):
-    """Lấy ảnh nổi bật và ảnh nền của bài viết"""
+    """Fetch the featured image and background image of an article"""
     driver = None
     try:
         driver = init_driver()
         driver.get(link)
         
-        # Chờ nội dung bài viết tải
+        # Wait for article content to load
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '.entry-content'))
         )
         
-        # Lấy ảnh nổi bật (og:image)
+        # Fetch featured image (og:image)
         image_url = None
         try:
             image_meta = driver.find_element(By.XPATH, "//meta[@property='og:image']")
@@ -146,7 +125,7 @@ def get_featured_image_and_background(link):
         except:
             image_url = None
         
-        # Lấy ảnh nền
+        # Fetch background image
         background_image = None
         try:
             background_element = driver.find_element(By.CSS_SELECTOR, '.entry-content')
@@ -158,29 +137,29 @@ def get_featured_image_and_background(link):
         
         return image_url, background_image
     except Exception as e:
-        logging.error(f"Lỗi khi lấy ảnh nổi bật và ảnh nền: {e}")
+        logging.error(f"Error fetching featured and background images: {e}")
         return None, None
     finally:
         if driver:
             driver.quit()
 
-# Gửi bài viết tin tức
+# Define function to send news articles
 async def send_latest_tinvit(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.chat_id
-    new_articles = get_titles_from_page()  # Lấy bài viết mới
+    new_articles = get_titles_from_page()  # Fetch new articles
 
-    # Giới hạn ở 10 bài đầu tiên
+    # Limit to the first 10 articles
     for idx, (title, link) in enumerate(new_articles[:10], 1):
         if title not in sent_articles:
-            sent_articles.add(title)  # Đánh dấu bài đã gửi
+            sent_articles.add(title)  # Mark article as sent
 
-            # Lấy đoạn văn thứ hai
+            # Fetch the second paragraph
             second_paragraph = get_second_paragraph_from_article(link)
             
-            # Lấy ảnh nổi bật và ảnh nền
+            # Fetch featured and background images
             image_url, background_image = get_featured_image_and_background(link)
 
-            # Thêm nút nhấn
+            # Add buttons
             buttons = [
                 [InlineKeyboardButton("✍️ ĐĂNG KÝ ONUS NHẬN 270K", url="https://signup.goonus.io/6277729708298887070?utm_campaign=invite")],
                 [
@@ -190,33 +169,33 @@ async def send_latest_tinvit(context: ContextTypes.DEFAULT_TYPE):
             ]
             reply_markup = InlineKeyboardMarkup(buttons)
 
-            # Gửi bài viết mới với mô tả và liên kết
+            # Send new article with description and link
             article_text = f"📰 *{title}*\n\n{second_paragraph}\n[Đọc thêm]({link})\n\n@onusfuture"
             
-            # Gửi ảnh (nếu có)
+            # Send image (if available)
             try:
                 if image_url:
                     await context.bot.send_photo(chat_id=chat_id, photo=image_url, caption=article_text, parse_mode="Markdown", reply_markup=reply_markup)
                 else:
                     await context.bot.send_message(chat_id=chat_id, text=article_text, parse_mode="Markdown", reply_markup=reply_markup)
             except Exception as e:
-                logging.error(f"Lỗi khi gửi bài viết lên Telegram: {e}")
-                await context.bot.send_message(chat_id=chat_id, text=f"📰 *{title}*\n\nLỗi khi gửi bài viết, vui lòng kiểm tra lại.\n[Đọc thêm]({link})", parse_mode="Markdown")
+                logging.error(f"Error sending article to Telegram: {e}")
+                await context.bot.send_message(chat_id=chat_id, text=f"📰 *{title}*\n\nError sending article, please check again.\n[Đọc thêm]({link})", parse_mode="Markdown")
 
-# Hàm cho lệnh "/tinvit"
+# Define function for the "/tinvit" command
 async def tinvit(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    await update.message.reply_text("Bắt đầu lấy bài viết mới...")
+    await update.message.reply_text("Starting to fetch new articles...")
 
-    # Kiểm tra bài mới mỗi 10 giây
+    # Check for new articles every 10 seconds
     context.job_queue.run_repeating(send_latest_tinvit, interval=10, first=1, chat_id=chat_id)
 
-# Chạy bot
+# Register bot and run
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TG_BOT_ACCESS_TOKEN).build()
 
     tinvit_handler = CommandHandler('tinvit', tinvit)
     application.add_handler(tinvit_handler)
 
-    logging.info("Bot đang chạy...")
+    logging.info("Bot is running...")
     application.run_polling()
