@@ -1,5 +1,8 @@
 import logging
 import re
+import tempfile
+import subprocess
+import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -19,25 +22,45 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+# Hàm dừng các tiến trình Chrome/Chromedriver
+def kill_chrome_processes():
+    try:
+        subprocess.run(["pkill", "-9", "chrome"], check=False)
+        subprocess.run(["pkill", "-9", "chromedriver"], check=False)
+        time.sleep(1)  # Đợi để đảm bảo tiến trình đã dừng
+    except Exception as e:
+        logging.warning(f"Không thể dừng tiến trình Chrome: {e}")
+
+# Khởi tạo WebDriver
+def init_driver():
+    kill_chrome_processes()  # Dừng tiến trình trước khi khởi tạo
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Tắt giao diện đồ họa
+    chrome_options.add_argument("--no-sandbox")  # Tắt sandbox để tương thích container
+    chrome_options.add_argument("--disable-dev-shm-usage")  # Giảm sử dụng bộ nhớ chia sẻ
+    chrome_options.add_argument("--disable-gpu")  # Tắt GPU để giảm tải
+    chrome_options.add_argument("--no-cache")  # Vô hiệu hóa cache
+    chrome_options.add_argument("--disable-extensions")  # Tắt extensions không cần thiết
+    chrome_options.add_argument(
+        "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+    )
+    # Tạo thư mục tạm duy nhất
+    user_data_dir = tempfile.mkdtemp()
+    chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    logging.info("Đã khởi tạo ChromeDriver thành công.")
+    return driver
+
 def get_latest_positions():
     try:
-        # Cấu hình Chrome Options
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument(
-            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-        )
-
         # Khởi tạo ChromeDriver
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        logging.info("Đã khởi tạo ChromeDriver thành công.")
+        driver = init_driver()
 
         # Truy cập trang web
         driver.get("https://goonus.io/insights/?tab=master")
         logging.info("Đã truy cập trang web goonus.io.")
 
-        # Đợi tối đa 15 giây (tăng thời gian chờ)
+        # Đợi tối đa 15 giây
         wait = WebDriverWait(driver, 15)
 
         # Kiểm tra và lấy các vị thế giao dịch
@@ -60,7 +83,7 @@ def get_latest_positions():
             return []
 
         latest_positions = []
-        for i, position in enumerate(positions[:8]):  # Lấy tối đa 5 vị thế
+        for i, position in enumerate(positions[:8]):  # Lấy tối đa 8 vị thế
             position_text = position.text.strip()
             profit_loss_text = profit_loss_elements[i].text.strip()
 
@@ -68,7 +91,7 @@ def get_latest_positions():
             percentage_match = re.search(r"([-+]?\d+\.?\d*)%", profit_loss_text)
             percentage_value = float(percentage_match.group(1)) if percentage_match else 0
 
-            # Kiểm tra điều kiện lãi > 40%
+            # Kiểm tra điều kiện lãi > 20%
             if "text-success" in profit_loss_elements[i].get_attribute("class") and percentage_value > 20:
                 latest_positions.append(f"{position_text} - Lãi lớn ✅ {profit_loss_text}")
                 logging.info(f"Thêm vị thế: {position_text} - {profit_loss_text}")
@@ -81,7 +104,7 @@ def get_latest_positions():
         if 'driver' in locals():
             driver.quit()
         return []
-    
+
 async def send_latest_positions(context: ContextTypes.DEFAULT_TYPE):
     chat_id = context.job.chat_id  # Lấy chat_id từ job context
     latest_positions = get_latest_positions()  # Lấy các vị thế mới nhất
@@ -113,7 +136,7 @@ async def positions(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if latest_positions:
         await context.bot.send_message(chat_id=chat_id, text="\n".join(latest_positions))
 
-    # Cập nhật vị thế mới mỗi 100 giây
+    # Cập nhật vị thế mới mỗi 20 giây
     context.job_queue.run_repeating(send_latest_positions, interval=20, first=20, chat_id=chat_id)
 
 if __name__ == '__main__':
