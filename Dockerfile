@@ -1,8 +1,11 @@
-# Chọn image Python chính thức làm base image
+# Sử dụng image Python chính thức làm base image
 FROM python:3.9-slim
 
+
+# Nâng cấp pip
 RUN pip install --upgrade pip
-# Cài đặt các thư viện Python cần thiết từ file requirements.txt
+
+# Cài đặt các thư viện Python từ requirements.txt
 COPY requirements.txt /app/requirements.txt
 WORKDIR /app
 RUN pip install --no-cache-dir -r requirements.txt
@@ -10,8 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Cài đặt Selenium và WebDriver Manager
 RUN pip install selenium webdriver-manager
 
-# Copy mã nguồn Python của bạn vào container
+# Copy mã nguồn Python vào container
 COPY . /app
 
-# Chạy nhiều file Python song song
-CMD python3 tintuc_test.py
+# Chạy file Python
+CMD ["python3", "tintuc_test.py"]
