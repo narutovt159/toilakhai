@@ -14,4 +14,4 @@ RUN pip install selenium webdriver-manager
 COPY . /app
 
 # Chạy nhiều file Python song song
-CMD python3 main.py
+CMD python3 tintuc_test.py
