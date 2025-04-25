@@ -1,6 +1,7 @@
 # Chọn image Python chính thức làm base image
 FROM python:3.9-slim
 
+RUN pip install --upgrade pip
 # Cài đặt các thư viện Python cần thiết từ file requirements.txt
 COPY requirements.txt /app/requirements.txt
 WORKDIR /app
