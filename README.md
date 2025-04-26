@@ -8,3 +8,6 @@ docker rm chaybot
 docker run -d --name chaybot khaideptrai
 docker run -d -p 8080:80 --name chaybot khaideptrai
 docker logs chaybot
+
+docker stop chaybot
+docker rm chaybot
