@@ -35,10 +35,7 @@ RUN apt-get update && apt-get install -y google-chrome-stable
 # Cài đặt các thư viện Python cần thiết từ file requirements.txt
 COPY requirements.txt /app/requirements.txt
 WORKDIR /app
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Cài đặt Selenium và WebDriver Manager
-RUN pip install selenium webdriver-manager
+RUN pip install -r requirements.txt
 
 # Đặt quyền cho thư mục làm việc
 RUN chown -R root:root /app
