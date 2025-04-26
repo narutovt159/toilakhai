@@ -32,6 +32,7 @@ RUN DISTRO=$(lsb_release -c | awk '{print $2}') && echo "deb [arch=amd64] https:
 # Cài đặt Google Chrome
 RUN apt-get update && apt-get install -y google-chrome-stable
 
+RUN pip install --upgrade pip
 # Cài đặt các thư viện Python cần thiết từ file requirements.txt
 COPY requirements.txt /app/requirements.txt
 WORKDIR /app
