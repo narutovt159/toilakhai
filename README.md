@@ -11,3 +11,5 @@ docker logs chaybot
 
 docker stop chaybot
 docker rm chaybot
+
+git pull origin master
