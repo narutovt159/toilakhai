@@ -1,5 +1,6 @@
 # toilakhai
 I want to code , developing
+sudo docker build -t khaideptrai .
 sudo usermod -aG docker $USER
 newgrp docker
 groups
