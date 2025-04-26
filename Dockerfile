@@ -38,6 +38,9 @@ COPY requirements.txt /app/requirements.txt
 WORKDIR /app
 RUN pip install -r requirements.txt
 
+# Cài đặt Selenium và WebDriver Manager
+RUN pip install selenium webdriver-manager
+
 # Đặt quyền cho thư mục làm việc
 RUN chown -R root:root /app
 RUN chmod -R 755 /app
