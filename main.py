@@ -1,7 +1,24 @@
-import subprocess
+import multiprocessing
+import os
 
-subprocess.Popen(["python3", "tintuc_test.py"])
-subprocess.Popen(["python3", "tinmoi.py"])
-subprocess.Popen(["python3", "positions.py"])
-subprocess.Popen(["python3", "giacoin.py"])
-subprocess.Popen(["python3", "bitcoin_news.py"])
+def run_script(filename):
+    print(f"Đang chạy: {filename}")
+    os.system(f"python3 {filename}")
+
+if __name__ == "__main__":
+    scripts = [
+        "tintuc_test.py",
+        "tinmoi.py",
+        "positions.py",
+        "giacoin.py",
+        "bitcoin_news.py"
+    ]
+
+    processes = []
+    for script in scripts:
+        p = multiprocessing.Process(target=run_script, args=(script,))
+        p.start()
+        processes.append(p)
+
+    for p in processes:
+        p.join()
