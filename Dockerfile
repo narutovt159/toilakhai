@@ -49,4 +49,4 @@ RUN chmod -R 755 /app
 COPY . /app
 
 # Chạy file Python
-CMD ["python3", "giacoin.py"]
+CMD ["python3", "main.py"]
