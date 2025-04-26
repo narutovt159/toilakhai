@@ -13,3 +13,4 @@ docker stop chaybot
 docker rm chaybot
 
 git pull origin master
+rm -rf ~/toilakhai/build
